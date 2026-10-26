@@ -30,6 +30,8 @@
 
 .pa-nav{display:flex;gap:5px}.pa-nav button{font-size:11px;color:#7c8ba1;padding:7px 8px;border-radius:9px;background:#eef2f7}.pa-panel{position:fixed;right:18px;top:85px;bottom:20px;width:min(360px,calc(100% - 30px));z-index:30;overflow:auto;background:#fff;border:1px solid #e4e8f0;border-radius:20px;padding:22px;box-shadow:0 15px 80px #26334922}.pa-panel[hidden]{display:none}.pa-panel-top{display:flex;justify-content:space-between;align-items:center}.pa-panel button{font-size:11px;background:#f0f3f8;border-radius:8px;padding:7px 10px;margin:8px 7px 0 0;color:#6d7e99}.pa-panel-note{font-size:11px;line-height:1.8;color:#98a3b3}.pa-item{padding:14px 0;border-bottom:1px solid #eef0f5}.pa-item p{line-height:1.7;font-size:13px;margin:0 0 6px;white-space:pre-wrap;overflow-wrap:anywhere}.pa-item small{color:#a3acb9;font-size:10px}.pa-item.reminder{padding:14px;background:#f0f5fc;border-radius:12px}.pa-empty{font-size:12px;color:#a2aaba;margin-top:35px}.pa-tool-event{margin-top:6px;color:#8b9bb1;font-size:11px}@media(max-width:700px){.demo-label{display:none}.pa-nav{gap:3px}.pa-nav button{font-size:10px;padding:6px}.top-actions{gap:1px}}
 .public-note{font-size:11px;color:#8b929e;margin:8px 0;line-height:1.7}.main{min-height:0}.messages{scroll-behavior:auto;overflow-anchor:none;min-width:0}.message-content{max-width:min(88%,540px);overflow:visible;min-width:0}.reply-stack{display:flex;flex-direction:column;align-items:flex-start;gap:9px;max-width:100%;min-width:0}.reply-stack>.bubble{width:fit-content;max-width:100%;min-width:0;max-height:none!important;height:auto;overflow:visible!important;display:block!important;-webkit-line-clamp:unset!important;line-clamp:unset!important;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;line-height:1.8;border-radius:6px 18px 18px 18px;padding:12px 17px}.reply-stack>.bubble:empty{display:none!important}.multi-bubble .message-tools{margin-top:6px}.message .avatar{flex-shrink:0}.streaming-phase{flex-shrink:0}.message.user .message-content{max-width:min(88%,540px)}@media(max-width:700px){.message-content,.message.user .message-content{max-width:calc(100% - 45px)}.reply-stack>.bubble{font-size:14px;line-height:1.8;padding:11px 14px}.message.user{padding-left:20px}.composer-wrap{padding-top:8px}.suggestions{margin-bottom:8px}}
+
+.question-options{margin:12px 0 0;padding:16px;background:#fff;border:1px solid #e6eaf0;border-radius:17px;max-width:100%;min-width:0}.question-options-title{font-size:14px;font-weight:500;line-height:1.7;color:#414a57}.question-options-choices{display:flex;flex-direction:column;gap:8px;margin-top:12px}.question-option{background:#f6f8fb;border:1px solid #e9edf3;border-radius:12px;padding:12px 14px;text-align:left;color:#566274;font-size:14px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;min-height:44px}.question-option:hover:enabled{background:#fff0e5;border-color:#edba94}.question-option.selected{background:#fff0e5;border-color:#edba94;color:#9c6037}.question-option:disabled{opacity:.6;cursor:default}.question-options-note{margin-top:11px;font-size:11px;line-height:1.6;color:#939ba7}
 </style>
 </head>
 <body>
@@ -2989,7 +2991,7 @@ function send(){
  const m={role:'user',text:text||'看看这些附件',files:attached.map(f=>f.name),time:Date.now()};current.messages.push(m);message(m);
  if(current.messages.filter(m=>m.role==='user').length===1){current.title=(text||'附件对话').slice(0,18);renderHistory()}
  $('#input').value='';$('#input').style.height='auto';attached=[];renderAttachments();save();busy=true;updateSend();thinking();
- const response=reply(text,m.files.length);
+ const response=reply(text,m.files.length);const question=getDemoQuestion(text);
  phaseTimer=setTimeout(()=>{loadingPhase('thinking');phaseTimer=setTimeout(()=>{loadingPhase('typing');phaseTimer=null},1500)},650);
  timer=setTimeout(()=>{
   removeThinking();const result=message({role:'assistant',text:'',time:Date.now()});streamingRow=result;
@@ -2997,7 +2999,7 @@ function send(){
   const phase=make('div','streaming-phase');phase.setAttribute('role','status');phase.append(generationSymbol(),make('span','','输入中'));result.bubble.before(phase);
   let n=0;timer=setInterval(()=>{
    n=Math.min(response.length,n+2);updateChatReply(result,response.slice(0,n));scrollDown();
-   if(n===response.length){clearInterval(timer);timer=null;finishStreaming();current.messages.push({role:'assistant',text:response,time:Date.now()});save();busy=false;
+   if(n===response.length){clearInterval(timer);timer=null;finishStreaming();current.messages.push({role:'assistant',text:response,time:Date.now(),question});save();busy=false;if(question)renderQuestionOptions(result,question);
     result.bot.setState('happy');setTimeout(()=>{if(result.row.isConnected)result.bot.setState('idle')},1800);setStatus('在这里，陪你想一想');updateSend()}
   },28);
  },2600)
@@ -3078,6 +3080,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')publicPanel.hidden=t
 
 // Keep the public demo conversational; the page itself labels all replies as examples.
 reply=function(text,files){
+ if(['去公园走走','找家店坐坐','在家放松一下','先听我说说','帮我理理事情','聊点轻松的'].includes(text))return '好，按这个方向来。\n\n你可以接着说说，有没有特别在意的事情？';
  if(files)return '附件的名字我看到了。\n\n这个演示页不会读取或上传文件内容。';
  if(/你好|嗨|哈喽|hello|hi\b/i.test(text))return '嗨，我在。\n\n今天想聊点什么？';
  if(/今天|待办|计划|安排/.test(text)&&!/周末/.test(text))return '好，先别急着把今天排满。\n\n今天最想完成的一件事是什么？我们先从它开始。';
@@ -3109,6 +3112,45 @@ reply=function(text,files){
  const previousMessage=message;message=function(m){const result=previousMessage(m);if(m.role==='assistant')result.row.querySelector('.speaker').textContent=name;return result;};
  display();
 })();
+
+// Shared card schema for web now and mobile later. Values are plain reply text, never actions.
+function validQuestionOptions(value){
+ if(!value||value.type!=='question_options'||value.version!==1||typeof value.question!=='string'||!value.question.trim()||value.question.length>120||!Array.isArray(value.options)||value.options.length<2||value.options.length>5)return null;
+ if(value.options.some(o=>typeof o!=='string'||!o.trim()||o.length>60)||new Set(value.options.map(o=>o.trim())).size!==value.options.length)return null;
+ return {...value,question:value.question.trim(),options:value.options.map(o=>o.trim())};
+}
+function renderQuestionOptions(result,value){
+ const q=validQuestionOptions(value);if(!q||result.row.querySelector('.question-options'))return;
+ const card=make('section','question-options');card.setAttribute('aria-label',q.question);
+ card.append(make('div','question-options-title',q.question));
+ const choices=make('div','question-options-choices');
+ const last=()=>result.row===document.querySelector('#messages>.message:last-child');
+ q.options.forEach(option=>{const b=make('button','question-option',option);b.type='button';
+  b.onclick=()=>{if(busy||!last()||card.dataset.answered)return;card.dataset.answered='true';card.querySelectorAll('button').forEach(x=>x.disabled=true);b.classList.add('selected');$('#input').value=option;chatFollowing=true;send();};choices.append(b);});
+ card.append(choices,make('div','question-options-note','也可以直接输入你的想法'));
+ const tail=result.row.querySelector('.message-tools')||result.row.querySelector('.time');
+ if(tail)tail.before(card);else result.row.querySelector('.message-content').append(card);
+ // Old cards remain readable but cannot accidentally answer an earlier question.
+ function refresh(){card.querySelectorAll('button').forEach(b=>b.disabled=!!card.dataset.answered||busy||!last());}
+ const root=$('#messages');const observer=new MutationObserver(()=>{if(!result.row.isConnected){observer.disconnect();return}refresh();});
+ observer.observe(root,{childList:true});refresh();scrollDown();
+}
+const previousQuestionMessage=message;
+message=function(m){const result=previousQuestionMessage(m);if(m.role==='assistant'&&m.question)renderQuestionOptions(result,m.question);return result;};
+const beforeQuestionUpdate=updateChatReply;
+updateChatReply=function(result,text){
+ // Do not reveal machine-readable presentation data during streaming.
+ let visible=String(text);const marker=visible.indexOf('<question-options>');
+ if(marker>=0)visible=visible.slice(0,marker);else{const tag='<question-options>';for(let n=tag.length-1;n>0;n--){if(visible.endsWith(tag.slice(0,n))){visible=visible.slice(0,-n);break;}}}
+ beforeQuestionUpdate(result,visible);
+};
+function getDemoQuestion(text){
+ if(['去公园走走','找家店坐坐','在家放松一下','先听我说说','帮我理理事情','聊点轻松的'].includes(text))return null;
+ if(/周末|旅行|出去|走走/.test(text))return {type:'question_options',version:1,question:'这个周末，你更想怎么过？',options:['去公园走走','找家店坐坐','在家放松一下']};
+ if(/累|忙|烦/.test(text))return {type:'question_options',version:1,question:'现在，你希望我怎么陪你？',options:['先听我说说','帮我理理事情','聊点轻松的']};
+ return null;
+}
+render();
 
 </script>
 </body></html>
