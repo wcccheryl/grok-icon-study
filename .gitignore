@@ -1,0 +1,11 @@
+runtime/
+.deps/
+.env
+.env.*
+*.db
+*.db-*
+*.sqlite*
+*.log
+*.pem
+*.key
+__pycache__/
