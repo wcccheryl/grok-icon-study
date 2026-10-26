@@ -29,7 +29,8 @@
 @media(prefers-reduced-motion:reduce){.generation-label{background:none;color:#8793a8}.generation-symbol span{height:7px}.bubble.is-streaming:after{opacity:1}}
 
 .pa-nav{display:flex;gap:5px}.pa-nav button{font-size:11px;color:#7c8ba1;padding:7px 8px;border-radius:9px;background:#eef2f7}.pa-panel{position:fixed;right:18px;top:85px;bottom:20px;width:min(360px,calc(100% - 30px));z-index:30;overflow:auto;background:#fff;border:1px solid #e4e8f0;border-radius:20px;padding:22px;box-shadow:0 15px 80px #26334922}.pa-panel[hidden]{display:none}.pa-panel-top{display:flex;justify-content:space-between;align-items:center}.pa-panel button{font-size:11px;background:#f0f3f8;border-radius:8px;padding:7px 10px;margin:8px 7px 0 0;color:#6d7e99}.pa-panel-note{font-size:11px;line-height:1.8;color:#98a3b3}.pa-item{padding:14px 0;border-bottom:1px solid #eef0f5}.pa-item p{line-height:1.7;font-size:13px;margin:0 0 6px;white-space:pre-wrap;overflow-wrap:anywhere}.pa-item small{color:#a3acb9;font-size:10px}.pa-item.reminder{padding:14px;background:#f0f5fc;border-radius:12px}.pa-empty{font-size:12px;color:#a2aaba;margin-top:35px}.pa-tool-event{margin-top:6px;color:#8b9bb1;font-size:11px}@media(max-width:700px){.demo-label{display:none}.pa-nav{gap:3px}.pa-nav button{font-size:10px;padding:6px}.top-actions{gap:1px}}
-.public-note{font-size:11px;color:#8b929e;margin:8px 0;line-height:1.7}</style>
+.public-note{font-size:11px;color:#8b929e;margin:8px 0;line-height:1.7}.main{min-height:0}.messages{scroll-behavior:auto;overflow-anchor:none;min-width:0}.message-content{max-width:min(88%,540px);overflow:visible;min-width:0}.reply-stack{display:flex;flex-direction:column;align-items:flex-start;gap:9px;max-width:100%;min-width:0}.reply-stack>.bubble{width:fit-content;max-width:100%;min-width:0;max-height:none!important;height:auto;overflow:visible!important;display:block!important;-webkit-line-clamp:unset!important;line-clamp:unset!important;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;line-height:1.8;border-radius:6px 18px 18px 18px;padding:12px 17px}.reply-stack>.bubble:empty{display:none!important}.multi-bubble .message-tools{margin-top:6px}.message .avatar{flex-shrink:0}.streaming-phase{flex-shrink:0}.message.user .message-content{max-width:min(88%,540px)}@media(max-width:700px){.message-content,.message.user .message-content{max-width:calc(100% - 45px)}.reply-stack>.bubble{font-size:14px;line-height:1.8;padding:11px 14px}.message.user{padding-left:20px}.composer-wrap{padding-top:8px}.suggestions{margin-bottom:8px}}
+</style>
 </head>
 <body>
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -2962,7 +2963,7 @@ window.GROK_GEO.solids = {
 
 </script>
 <script>
-GROK_GEO.palette.orange.light='rgba(230,160,126,.82)';GROK_GEO.palette.yellow.light='rgba(232,202,117,.84)';GROK_GEO.palette.black.light='rgba(112,120,134,.82)';GROK_GEO.palette.green.light='rgba(143,170,157,.82)';const $=s=>document.querySelector(s), make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el};
+GROK_GEO.palette.orange.light='rgba(241,139,85,.88)';GROK_GEO.palette.yellow.light='rgba(242,194,64,.88)';GROK_GEO.palette.black.light='rgba(112,120,134,.82)';GROK_GEO.palette.green.light='rgba(143,170,157,.82)';const $=s=>document.querySelector(s), make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el};
 const storeKey='grok-public-demo-v2';let data;try{data=JSON.parse(localStorage.getItem(storeKey)||'null')}catch{};
 if(!data||!Array.isArray(data.chats)||!data.chats.length)data={chats:[{id:Date.now().toString(),title:'从一个小想法开始',messages:[]}],active:null};
 let current=data.chats.find(c=>c.id===data.active)||data.chats[0];let bots=[],busy=false,timer=null,attached=[],typing=null,phaseTimer=null,streamingRow=null;let appearance={shape:'blob',color:'orange'};
@@ -2995,7 +2996,7 @@ function send(){
   result.bot.setState('writing');setStatus('输入中…','writing');result.row.classList.add('is-loading','phase-typing');result.bubble.classList.add('is-streaming');
   const phase=make('div','streaming-phase');phase.setAttribute('role','status');phase.append(generationSymbol(),make('span','','输入中'));result.bubble.before(phase);
   let n=0;timer=setInterval(()=>{
-   n=Math.min(response.length,n+2);result.bubble.textContent=response.slice(0,n);scrollDown();
+   n=Math.min(response.length,n+2);updateChatReply(result,response.slice(0,n));scrollDown();
    if(n===response.length){clearInterval(timer);timer=null;finishStreaming();current.messages.push({role:'assistant',text:response,time:Date.now()});save();busy=false;
     result.bot.setState('happy');setTimeout(()=>{if(result.row.isConnected)result.bot.setState('idle')},1800);setStatus('在这里，陪你想一想');updateSend()}
   },28);
@@ -3003,7 +3004,7 @@ function send(){
 }
 function finishStreaming(){if(streamingRow){streamingRow.row.classList.remove('is-loading','phase-typing');streamingRow.bubble.classList.remove('is-streaming');streamingRow.row.querySelector('.streaming-phase')?.remove();streamingRow=null}}
 function stop(){clearTimeout(timer);clearInterval(timer);clearTimeout(phaseTimer);timer=null;phaseTimer=null;removeThinking();
- if(streamingRow){const text=streamingRow.bubble.textContent+'\n\n（已停止生成）';streamingRow.bubble.textContent=text;current.messages.push({role:'assistant',text,time:Date.now()});save();finishStreaming()}
+ if(streamingRow){const text=(streamingRow.chatText??streamingRow.bubble.textContent)+'\n\n（已停止生成）';updateChatReply(streamingRow,text);current.messages.push({role:'assistant',text,time:Date.now()});save();finishStreaming()}
  busy=false;bots.forEach(b=>b.setState('idle'));setStatus('已暂停，随时继续');updateSend()
 }
 function renderAttachments(){$('#attachments').replaceChildren();attached.forEach((f,i)=>{const chip=make('div','file-chip',f.name);const b=make('button','','×');b.type='button';b.setAttribute('aria-label','移除附件 '+f.name);b.onclick=()=>{attached.splice(i,1);renderAttachments();updateSend()};chip.append(b);$('#attachments').append(chip)})}
@@ -3016,6 +3017,48 @@ $('#attach').onclick=()=>$('#file-input').click();$('#file-input').onchange=e=>{
 $('#settings-button').onclick=()=>{const hidden=!$('#settings').hidden;$('#settings').hidden=hidden;$('#settings-button').setAttribute('aria-expanded',!hidden)};document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#settings').hidden=true;$('#settings-button').setAttribute('aria-expanded','false');hideSidebar()}});
 $('#shape').onchange=e=>{appearance.shape=e.target.value;[headerBot,...bots].forEach(b=>b.setShape(appearance.shape))};$('#color').onchange=e=>{appearance.color=e.target.value;[headerBot,...bots].forEach(b=>b.setColor(appearance.color,'light'))};
 render();save();
+</script>
+<script>
+// One stored assistant turn can display as several short, fully expanded bubbles.
+function splitChatBubbles(value,limit=110){
+ const text=String(value??'');if(!text)return [''];
+ const out=[];let rest=text;
+ while(rest.length){
+  const nextParagraph=rest.indexOf('\n\n');
+  if(nextParagraph>=0&&nextParagraph+2<=limit){out.push(rest.slice(0,nextParagraph+2));rest=rest.slice(nextParagraph+2);continue;}
+  if(rest.length<=limit){out.push(rest);break}
+  const head=rest.slice(0,limit);let cut=0;
+  const paragraph=head.lastIndexOf('\n\n');
+  if(paragraph>=0)cut=paragraph+2;
+  if(!cut){const breaks=[...head.matchAll(/[。！？!?；;]\s*|\n|[.!?]\s+/g)];const last=breaks.at(-1);if(last)cut=last.index+last[0].length;}
+  if(!cut||cut<20){const space=head.lastIndexOf(' ');cut=space>limit/2?space+1:limit;}
+  // Keep UTF-16 surrogate pairs intact, even during streamed emoji output.
+  if(/[\uD800-\uDBFF]/.test(rest[cut-1]||''))cut--;
+  out.push(rest.slice(0,cut));rest=rest.slice(cut);
+ }
+ return out;
+}
+function updateChatReply(result,text){
+ if(!result.stack){result.stack=make('div','reply-stack');result.bubble.before(result.stack);result.stack.append(result.bubble);}
+ const pieces=splitChatBubbles(text),stack=result.stack;
+ let bubbles=[...stack.querySelectorAll(':scope > .bubble')];
+ while(bubbles.length<pieces.length){const bubble=make('div','bubble');stack.append(bubble);bubbles.push(bubble);}
+ while(bubbles.length>pieces.length)bubbles.pop().remove();
+ bubbles.forEach((bubble,i)=>{bubble.textContent=pieces[i].trim();bubble.classList.toggle('is-streaming',i===pieces.length-1&&result.row.classList.contains('is-loading'));});
+ result.chatText=String(text);result.bubble=bubbles.at(-1);result.row.classList.toggle('multi-bubble',pieces.length>1);
+}
+const originalChatMessage=message;
+message=function(m){const result=originalChatMessage(m);if(m.role==='assistant'&&m.text)updateChatReply(result,m.text);return result;};
+let chatFollowing=true,chatLastScroll=0;
+$('#messages').addEventListener('scroll',()=>{const el=$('#messages');if(el.scrollTop<chatLastScroll-3)chatFollowing=false;if(el.scrollHeight-el.clientHeight-el.scrollTop<60)chatFollowing=true;chatLastScroll=el.scrollTop;},{passive:true});
+scrollDown=function(){if(!chatFollowing)return;const el=$('#messages');el.scrollTop=el.scrollHeight;chatLastScroll=el.scrollTop;};
+$('#composer').addEventListener('submit',()=>{chatFollowing=true;},true);
+$('#input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing)chatFollowing=true;},true);
+$('#suggestions').addEventListener('click',()=>{chatFollowing=true;},true);
+const originalChatRender=render;render=function(){chatFollowing=true;originalChatRender();};
+// Repaint already stored messages with the same bubble layout used by streaming.
+render();
+
 </script>
 <script>
 // Public preview has no API connections and no access to the private PA service.
@@ -3032,6 +3075,17 @@ const publicNav=make('div','pa-nav');
 });
 $('.top-actions').prepend(publicNav);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')publicPanel.hidden=true});
+
+// Keep the public demo conversational; the page itself labels all replies as examples.
+reply=function(text,files){
+ if(files)return '附件的名字我看到了。\n\n这个演示页不会读取或上传文件内容。';
+ if(/你好|嗨|哈喽|hello|hi\b/i.test(text))return '嗨，我在。\n\n今天想聊点什么？';
+ if(/今天|待办|计划|安排/.test(text)&&!/周末/.test(text))return '好，先别急着把今天排满。\n\n今天最想完成的一件事是什么？我们先从它开始。';
+ if(/周末|旅行|出去|走走/.test(text))return '周末想换个环境，还是在家好好歇一歇？\n\n如果想出门，可以先留半天去公园走走，不用排得太满。';
+ if(/想法|产品|打磨|创意/.test(text))return '好呀，把那个还没成形的想法说给我听。\n\n先从一个问题开始：你最想帮谁解决什么麻烦？';
+ if(/累|忙|烦/.test(text))return '听起来最近有点累。\n\n你想先说说发生了什么，还是一起把手头的事理一理？';
+ return '我收到啦。\n\n这里先演示短消息和连续气泡的聊天方式。接上私人助理服务后，才能结合你的情况认真回答。';
+};
 
 </script>
 </body></html>
