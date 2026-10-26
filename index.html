@@ -3087,5 +3087,28 @@ reply=function(text,files){
  return '我收到啦。\n\n这里先演示短消息和连续气泡的聊天方式。接上私人助理服务后，才能结合你的情况认真回答。';
 };
 
+// Shared display profile. A future signed-in client can supply the same name from its profile API.
+(()=>{
+ const key=storeKey+'-companion-name';let name='Grok';
+ try{name=localStorage.getItem(key)||name;}catch{}
+ const clean=value=>Array.from(String(value).replace(/[\u0000-\u001f\u007f]/g,'').trim()).slice(0,20).join('');
+ name=clean(name)||'Grok';
+ const label=make('label','','伙伴的名字'),field=document.createElement('input');
+ field.type='text';field.id='companion-name';field.maxLength=40;field.placeholder='给伙伴起个名字';field.value=name;field.autocomplete='off';
+ field.style.cssText='width:135px;max-width:60%;border:1px solid #e2e6ed;border-radius:8px;background:#f8f9fb;padding:7px 9px;color:#3e4652;font-size:13px;';
+ label.append(field);$('#settings').querySelector('p').after(label);
+ function display(){
+  $('#input').placeholder='有什么想说的，告诉'+name+'…';
+  $('#input').setAttribute('aria-label','发送给'+name+'的消息');
+  $('.identity-name').textContent=name;
+  document.querySelectorAll('.message.assistant .speaker').forEach(el=>el.textContent=name);
+ }
+ field.addEventListener('input',()=>{name=clean(field.value)||'Grok';display();});
+ field.addEventListener('change',()=>{field.value=name;try{localStorage.setItem(key,name);}catch{toast('当前浏览器未能保存名称');}});
+ field.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();field.blur();}});
+ const previousMessage=message;message=function(m){const result=previousMessage(m);if(m.role==='assistant')result.row.querySelector('.speaker').textContent=name;return result;};
+ display();
+})();
+
 </script>
 </body></html>
